@@ -1,5 +1,6 @@
 # Acknowledgments:
 micrograd is inspired from https://github.com/karpathy/micrograd 
+
 It's written in Swift. 
 
 # Description:
