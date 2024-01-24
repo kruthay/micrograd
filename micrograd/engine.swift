@@ -6,15 +6,27 @@
 //
 import Foundation
 
+// Exponent operator
 infix operator ** :  MultiplicationPrecedence
 
+// Scalar representation of data which includes gradients and gradient function.
 final class Value {
-    
+    // data value
     var data : Double
+    
+    // children property to store the children Values, required for backprop
     var children: [Value] = []
+    
+    // operations property is made to be used for GraphViz, which is currently buggy for Swift
     var operations: String = ""
+    
+    // grad property to store the gradient value
     var grad: Double = 0.0
+    
+    // label for the GraphViz
     var label: String = ""
+    
+    // _backward stores the gradient function
     var _backward: () -> Void = {}
     
     init(_ data: Double, children: [Value] = [], operations: String = "") {
@@ -24,12 +36,14 @@ final class Value {
     }
 }
 
+// String Convertible to provide accurate description for Value type
 extension Value: CustomStringConvertible {
     var description: String {
         return "\(label) d: \(String(format: "%.4f",data)), g: \(String(format: "%.4f",grad)) "
     }
 }
 
+//Required for the topological sort function
 extension Value: Hashable {
     
     static func == (lhs: Value, rhs: Value) -> Bool {
@@ -43,6 +57,7 @@ extension Value: Hashable {
     
 }
 
+// Used to get += methods by default
 extension Value: AdditiveArithmetic {
     
     static func + (lhs: Value, rhs: Value) -> Value {
@@ -50,7 +65,7 @@ extension Value: AdditiveArithmetic {
         out._backward = {
             lhs.grad += out.grad
             rhs.grad += out.grad
-
+            
         }
         return out
     }
@@ -66,8 +81,9 @@ extension Value: AdditiveArithmetic {
     
 }
 
+// Used to get protocol based support for Numeric Variables and Error Values
 extension Value : Numeric {
-        var magnitude: Double {
+    var magnitude: Double {
         return Swift.abs(data)
     }
     
@@ -83,7 +99,7 @@ extension Value : Numeric {
     
     typealias IntegerLiteralType = Int
     
- static func - (lhs: Value, rhs: Value) -> Value {
+    static func - (lhs: Value, rhs: Value) -> Value {
         return lhs + (-1 * rhs)
     }
     
@@ -105,6 +121,8 @@ extension Value : Numeric {
         return lhs * (1/rhs)
     }
     
+    
+    
     static func / (lhs: Double, rhs: Value) -> Value {
         return lhs * (rhs ** (-1))
     }
@@ -112,7 +130,7 @@ extension Value : Numeric {
     
     static func * (lhs: Value, rhs: Value) -> Value {
         let out = Value(lhs.data * rhs.data, children: [lhs, rhs], operations: "*")
-
+        
         out._backward = {
             lhs.grad += rhs.data * out.grad
             rhs.grad += lhs.data * out.grad
@@ -145,7 +163,11 @@ extension Value : Numeric {
         }
         return out
     }
-    
+}
+
+// Activation Functions
+extension Value {
+    // tanh activation function and it's gradient function
     func tanh() -> Value {
         let val = exp(2.0 * self.data)
         let out = Value((val - 1 ) / (val + 1), children: [self], operations: "tanh")
@@ -155,7 +177,11 @@ extension Value : Numeric {
         return out
         
     }
-    
+}
+
+// Backward pass
+extension Value {
+    // Topological sort is used to create a DAG and to apply backward pass on the reverse sorted order
     func backward() {
         var sorted : [Value] = []
         var visited: Set<Value> = []

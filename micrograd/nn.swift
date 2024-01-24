@@ -6,6 +6,8 @@
 //
 
 import Foundation
+
+
 class Neuron : CustomStringConvertible {
     var w: [Value]
     var b: Value
