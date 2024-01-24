@@ -7,7 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		873AD67E2B60B17B0097AE69 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 873AD67D2B60B17B0097AE69 /* main.swift */; };
+		873AD67E2B60B17B0097AE69 /* engine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 873AD67D2B60B17B0097AE69 /* engine.swift */; };
+		87FA29A32B60BFE300DA3F25 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87FA29A22B60BFE300DA3F25 /* main.swift */; };
+		87FA29A52B60C00800DA3F25 /* nn.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87FA29A42B60C00800DA3F25 /* nn.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -24,7 +26,9 @@
 
 /* Begin PBXFileReference section */
 		873AD67A2B60B17B0097AE69 /* micrograd */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = micrograd; sourceTree = BUILT_PRODUCTS_DIR; };
-		873AD67D2B60B17B0097AE69 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
+		873AD67D2B60B17B0097AE69 /* engine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = engine.swift; sourceTree = "<group>"; };
+		87FA29A22B60BFE300DA3F25 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
+		87FA29A42B60C00800DA3F25 /* nn.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = nn.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -57,7 +61,9 @@
 		873AD67C2B60B17B0097AE69 /* micrograd */ = {
 			isa = PBXGroup;
 			children = (
-				873AD67D2B60B17B0097AE69 /* main.swift */,
+				873AD67D2B60B17B0097AE69 /* engine.swift */,
+				87FA29A42B60C00800DA3F25 /* nn.swift */,
+				87FA29A22B60BFE300DA3F25 /* main.swift */,
 			);
 			path = micrograd;
 			sourceTree = "<group>";
@@ -78,6 +84,8 @@
 			dependencies = (
 			);
 			name = micrograd;
+			packageProductDependencies = (
+			);
 			productName = micrograd;
 			productReference = 873AD67A2B60B17B0097AE69 /* micrograd */;
 			productType = "com.apple.product-type.tool";
@@ -106,6 +114,8 @@
 				Base,
 			);
 			mainGroup = 873AD6712B60B17B0097AE69;
+			packageReferences = (
+			);
 			productRefGroup = 873AD67B2B60B17B0097AE69 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -120,7 +130,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				873AD67E2B60B17B0097AE69 /* main.swift in Sources */,
+				87FA29A32B60BFE300DA3F25 /* main.swift in Sources */,
+				87FA29A52B60C00800DA3F25 /* nn.swift in Sources */,
+				873AD67E2B60B17B0097AE69 /* engine.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
