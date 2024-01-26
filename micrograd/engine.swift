@@ -10,7 +10,7 @@ import Foundation
 // Exponent operator
 infix operator ** :  MultiplicationPrecedence
 
-/// Represents a scalar value that includes gradients and gradient functions.
+/// Represents a node in a computational graph used for automatic differentiation.
 final class Value {
     // Actual data value
     var data: Double
@@ -30,7 +30,12 @@ final class Value {
     // Closure to store the gradient function
     var _backward: () -> Void = {}
     
-    /// Initializes a Value with given data, children, and operations.
+    /// Initializes a `Value` with given data, children, and operations.
+    ///
+    /// - Parameters:
+    ///   - data: The actual data value of the `Value`.
+    ///   - children: An array of child `Value` instances, required for backpropagation.
+    ///   - operations: A string representation of operations, used for GraphViz (currently not fully functional in Swift).
     init(_ data: Double, children: [Value] = [], operations: String = "") {
         self.data = data
         self.children = children
@@ -38,48 +43,143 @@ final class Value {
     }
 }
 
-// String Convertible to provide accurate description for Value type
+
+/// Conformance to the `CustomStringConvertible` protocol for `Value`.
+///
+/// Provides a custom string representation for instances of `Value`.
+///
+/// - Note: The string representation includes the `label`, `data`, and `grad` properties.
+///
+/// - Example:
+///   ```swift
+///   let value = Value(5.0, label: "example")
+///   let description = value.description
+///   ```
+///   In this example, `description` will be a string representing the `label`, `data`, and `grad` properties of the `value`.
 extension Value: CustomStringConvertible {
+    
+    /// The custom string representation of the `Value` instance.
     var description: String {
         return "\(label) d: \(String(format: "%.4f", data)), g: \(String(format: "%.4f", grad)) "
     }
 }
 
-// Required for the topological sort function
+
+/// Conformance to the `Hashable` protocol for `Value`.
+///
+/// Enables instances of `Value` to be used in data structures that require hashing.
+///
+/// - Note: The comparison for equality (`==`) is based on the equality of `data`, `grad`, and `children` properties.
+///
+/// - Example:
+///   ```swift
+///   let value1 = Value(3.0)
+///   let value2 = Value(3.0)
+///   let areEqual = value1 == value2
+///   ```
+///   In this example, `areEqual` will be `true` because the `data`, `grad`, and `children` properties of `value1` and `value2` are equal.
 extension Value: Hashable {
     
+    /// Compares two `Value` instances for equality.
+    ///
+    /// - Parameters:
+    ///   - lhs: The left-hand operand `Value`.
+    ///   - rhs: The right-hand operand `Value`.
+    ///
+    /// - Returns: `true` if the `data`, `grad`, and `children` properties of both instances are equal; otherwise, `false`.
     static func == (lhs: Value, rhs: Value) -> Bool {
         return lhs.data == rhs.data && lhs.grad == rhs.grad && lhs.children == rhs.children
     }
     
+    /// Computes the hash value for a `Value` instance.
+    ///
+    /// - Parameters:
+    ///   - hasher: The hasher to use for combining hash values.
     func hash(into hasher: inout Hasher) {
         hasher.combine(self.data)
         hasher.combine(self.grad)
     }
 }
 
-// Used to get += methods by default
+
+
 extension Value: AdditiveArithmetic {
     
-    /// Addition of two Values.
+    /// Performs addition of two `Value` instances.
+    ///
+    /// This operator calculates the result of adding the left-hand `Value` to the right-hand `Value`.
+    ///
+    /// - Parameters:
+    ///   - lhs: The first `Value` to be added.
+    ///   - rhs: The second `Value` to be added.
+    ///
+    /// - Returns: A new `Value` representing the result of the addition operation.
+    ///
+    /// - Note: The `operations` property of the resulting `Value` is set to "+" to indicate the operation performed.
+    ///
+    /// - Example:
+    ///   ```swift
+    ///   let value1 = Value(3.0)
+    ///   let value2 = Value(5.0)
+    ///   let result = value1 + value2
+    ///   ```
+    ///   In this example, `result` will be a new `Value` representing the sum of 3.0 and 5.0.
     static func + (lhs: Value, rhs: Value) -> Value {
+        // Calculate the result of the addition operation.
         let out = Value(lhs.data + rhs.data, children: [lhs, rhs], operations: "+")
+        
+        // Define the backward closure for gradient calculation during backpropagation.
         out._backward = {
             lhs.grad += out.grad
             rhs.grad += out.grad
         }
+        
+        // Return the result of the addition operation.
         return out
     }
     
-    /// Addition of a Value and a Double.
+    /// Performs addition of a `Value` and a `Double`.
+    ///
+    /// This operator calculates the result of adding a `Double` to a `Value`.
+    ///
+    /// - Parameters:
+    ///   - lhs: The `Value` to be added.
+    ///   - rhs: The `Double` to be added.
+    ///
+    /// - Returns: A new `Value` representing the result of the addition operation.
+    ///
+    /// - Example:
+    ///   ```swift
+    ///   let value = Value(7.0)
+    ///   let doubleValue = 2.0
+    ///   let result = value + doubleValue
+    ///   ```
+    ///   In this example, `result` will be a new `Value` representing the sum of 7.0 and 2.0.
     static func + (lhs: Value, rhs: Double) -> Value {
         return lhs + Value(rhs)
     }
     
-    /// Addition of a Double and a Value.
+    /// Performs addition of a `Double` and a `Value`.
+    ///
+    /// This operator calculates the result of adding a `Value` to a `Double`.
+    ///
+    /// - Parameters:
+    ///   - lhs: The `Double` to be added.
+    ///   - rhs: The `Value` to be added.
+    ///
+    /// - Returns: A new `Value` representing the result of the addition operation.
+    ///
+    /// - Example:
+    ///   ```swift
+    ///   let doubleValue = 4.0
+    ///   let value = Value(6.0)
+    ///   let result = doubleValue + value
+    ///   ```
+    ///   In this example, `result` will be a new `Value` representing the sum of 4.0 and 6.0.
     static func + (lhs: Double, rhs: Value) -> Value {
         return Value(lhs) + rhs
     }
+    
 }
 
 // Used to get protocol-based support for Numeric Variables and Error Values
@@ -102,116 +202,373 @@ extension Value: Numeric {
     
     typealias IntegerLiteralType = Int
     
-    /// Subtraction of two Values.
+    /// Performs subtraction of two `Value` instances.
+    ///
+    /// This operator calculates the result of subtracting the right-hand `Value` from the left-hand `Value`.
+    ///
+    /// - Parameters:
+    ///   - lhs: The minuend `Value`.
+    ///   - rhs: The subtrahend `Value`.
+    ///
+    /// - Returns: A new `Value` representing the result of the subtraction operation.
+    ///
+    /// - Example:
+    ///   ```swift
+    ///   let minuend = Value(5.0)
+    ///   let subtrahend = Value(3.0)
+    ///   let result = minuend - subtrahend
+    ///   ```
+    ///   In this example, `result` will be a new `Value` representing the result of subtracting 3.0 from 5.0.
     static func - (lhs: Value, rhs: Value) -> Value {
         return lhs + (-1 * rhs)
     }
     
-    /// Subtraction of a Value and a Double.
+    /// Performs subtraction of a `Value` by a `Double`.
+    ///
+    /// This operator calculates the result of subtracting a `Double` from a `Value`.
+    ///
+    /// - Parameters:
+    ///   - lhs: The minuend `Value`.
+    ///   - rhs: The subtrahend `Double`.
+    ///
+    /// - Returns: A new `Value` representing the result of the subtraction operation.
+    ///
+    /// - Example:
+    ///   ```swift
+    ///   let minuend = Value(10.0)
+    ///   let subtrahend = 2.0
+    ///   let result = minuend - subtrahend
+    ///   ```
+    ///   In this example, `result` will be a new `Value` representing the result of subtracting 2.0 from 10.0.
     static func - (lhs: Value, rhs: Double) -> Value {
         return lhs - Value(rhs)
     }
     
-    /// Subtraction of a Double and a Value.
+    /// Performs subtraction of a `Double` from a `Value`.
+    ///
+    /// This operator calculates the result of subtracting a `Value` from a `Double`.
+    ///
+    /// - Parameters:
+    ///   - lhs: The minuend `Double`.
+    ///   - rhs: The subtrahend `Value`.
+    ///
+    /// - Returns: A new `Value` representing the result of the subtraction operation.
+    ///
+    /// - Example:
+    ///   ```swift
+    ///   let minuend = 8.0
+    ///   let subtrahend = Value(3.0)
+    ///   let result = minuend - subtrahend
+    ///   ```
+    ///   In this example, `result` will be a new `Value` representing the result of subtracting 3.0 from 8.0.
     static func - (lhs: Double, rhs: Value) -> Value {
         return Value(lhs) - rhs
     }
     
-    /// Division of two Values.
+    /// Performs division of two `Value` instances.
+    ///
+    /// This operator calculates the result of dividing the left-hand `Value` by the right-hand `Value`.
+    ///
+    /// - Parameters:
+    ///   - lhs: The numerator `Value`.
+    ///   - rhs: The denominator `Value`.
+    ///
+    /// - Returns: A new `Value` representing the result of the division operation.
+    ///
+    /// - Note: The division is achieved by multiplying the numerator by the reciprocal of the denominator.
+    ///   If the denominator is zero, a warning is printed, and the result is set to `Double.nan`.
+    ///
+    /// - Example:
+    ///   ```swift
+    ///   let numerator = Value(6.0)
+    ///   let denominator = Value(3.0)
+    ///   let result = numerator / denominator
+    ///   ```
+    ///   In this example, `result` will be a new `Value` representing the result of 6.0 divided by 3.0.
+    
     static func / (lhs: Value, rhs: Value) -> Value {
+        if rhs.data == 0 {
+            print("Warning: Division by zero.")
+            return Value(Double.nan)
+        }
         return lhs * (rhs ** (-1))
     }
     
-    /// Division of a Value and a Double.
+    /// Performs division of a `Value` by a `Double`.
+    ///
+    /// This operator calculates the result of dividing a `Value` by a `Double`.
+    ///
+    /// - Parameters:
+    ///   - lhs: The numerator `Value`.
+    ///   - rhs: The denominator `Double`.
+    ///
+    /// - Returns: A new `Value` representing the result of the division operation.
+    ///
+    /// - Note: If the denominator is zero, a warning is printed, and the result is set to `Double.nan`.
+    ///
+    /// - Example:
+    ///   ```swift
+    ///   let numerator = Value(10.0)
+    ///   let denominator = 2.0
+    ///   let result = numerator / denominator
+    ///   ```
+    ///   In this example, `result` will be a new `Value` representing the result of 10.0 divided by 2.0.
+    
     static func / (lhs: Value, rhs: Double) -> Value {
+        if rhs == 0 {
+            print("Warning: Division by zero.")
+            return Value(Double.nan)
+        }
         return lhs * (1 / rhs)
     }
     
-    /// Division of a Double and a Value.
+    /// Performs division of a `Double` by a `Value`.
+    ///
+    /// This operator calculates the result of dividing a `Double` by a `Value`.
+    ///
+    /// - Parameters:
+    ///   - lhs: The numerator `Double`.
+    ///   - rhs: The denominator `Value`.
+    ///
+    /// - Returns: A new `Value` representing the result of the division operation.
+    ///
+    /// - Note: If the denominator is zero, a warning is printed, and the result is set to `Double.nan`.
+    ///
+    /// - Example:
+    ///   ```swift
+    ///   let numerator = 5.0
+    ///   let denominator = Value(2.0)
+    ///   let result = numerator / denominator
+    ///   ```
+    ///   In this example, `result` will be a new `Value` representing the result of 5.0 divided by 2.0.
+    
     static func / (lhs: Double, rhs: Value) -> Value {
+        if rhs.data == 0 {
+            print("Warning: Division by zero.")
+            return Value(Double.nan)
+        }
         return lhs * (rhs ** (-1))
     }
     
-    /// Multiplication of two Values.
+    
+    
+    /// Performs multiplication of two `Value` instances.
+    ///
+    /// This operator calculates the result of multiplying two `Value` instances and sets up the backward closure
+    /// for gradient calculation during backpropagation.
+    ///
+    /// - Parameters:
+    ///   - lhs: The left-hand operand `Value`.
+    ///   - rhs: The right-hand operand `Value`.
+    ///
+    /// - Returns: A new `Value` representing the result of the multiplication operation.
+    ///
+    /// - Note: The `operations` property of the resulting `Value` is set to "*" to indicate the operation performed.
+    ///
+    /// - Example:
+    ///   ```swift
+    ///   let value1 = Value(2.0)
+    ///   let value2 = Value(3.0)
+    ///   let result = value1 * value2
+    ///   ```
+    ///   In this example, `result` will be a new `Value` representing the product of `value1` and `value2`.
     static func * (lhs: Value, rhs: Value) -> Value {
+        // Calculate the result of the multiplication operation.
         let out = Value(lhs.data * rhs.data, children: [lhs, rhs], operations: "*")
         
+        // Define the backward closure for gradient calculation during backpropagation.
         out._backward = {
             lhs.grad += rhs.data * out.grad
             rhs.grad += lhs.data * out.grad
         }
         
+        // Return the result of the multiplication operation.
         return out
     }
     
-    /// Multiplication of a Value and a Double.
+    /// Performs multiplication of a `Value` and a `Double`.
+    ///
+    /// This operator calculates the result of multiplying a `Value` instance by a `Double`.
+    ///
+    /// - Parameters:
+    ///   - lhs: The left-hand operand `Value`.
+    ///   - rhs: The right-hand operand `Double`.
+    ///
+    /// - Returns: A new `Value` representing the result of the multiplication operation.
+    ///
+    /// - Example:
+    ///   ```swift
+    ///   let value = Value(2.0)
+    ///   let doubleValue = 3.0
+    ///   let result = value * doubleValue
+    ///   ```
+    ///   In this example, `result` will be a new `Value` representing the product of `value` and `doubleValue`.
     static func * (lhs: Value, rhs: Double) -> Value {
         return lhs * Value(rhs)
     }
     
-    /// Multiplication of a Double and a Value.
+    /// Performs multiplication of a `Double` and a `Value`.
+    ///
+    /// This operator calculates the result of multiplying a `Double` by a `Value` instance.
+    ///
+    /// - Parameters:
+    ///   - lhs: The left-hand operand `Double`.
+    ///   - rhs: The right-hand operand `Value`.
+    ///
+    /// - Returns: A new `Value` representing the result of the multiplication operation.
+    ///
+    /// - Example:
+    ///   ```swift
+    ///   let doubleValue = 2.0
+    ///   let value = Value(3.0)
+    ///   let result = doubleValue * value
+    ///   ```
+    ///   In this example, `result` will be a new `Value` representing the product of `doubleValue` and `value`.
     static func * (lhs: Double, rhs: Value) -> Value {
         return Value(lhs) * rhs
     }
     
-    /// Compound assignment multiplication of two Values.
+    /// Performs compound assignment multiplication of two `Value` instances.
+    ///
+    /// This operator calculates the result of multiplying two `Value` instances and assigns the result to the left-hand operand.
+    ///
+    /// - Parameters:
+    ///   - lhs: The left-hand operand `Value`.
+    ///   - rhs: The right-hand operand `Value`.
     static func *= (lhs: inout Value, rhs: Value) {
         lhs = lhs * rhs
     }
     
-    /// Compound assignment multiplication of a Value and a Double.
+    /// Performs compound assignment multiplication of a `Value` and a `Double`.
+    ///
+    /// This operator calculates the result of multiplying a `Value` instance by a `Double` and assigns the result to the left-hand operand.
+    ///
+    /// - Parameters:
+    ///   - lhs: The left-hand operand `Value`.
+    ///   - rhs: The right-hand operand `Double`.
     static func *= (lhs: inout Value, rhs: Double) {
         lhs = lhs * rhs
     }
     
-    /// Exponential operation on a Value with a Double exponent.
+    /// Performs an exponential operation on a `Value` with a `Double` exponent.
+    ///
+    /// This operator calculates the result of raising a `Value` instance to the power of a `Double` exponent.
+    ///
+    /// - Parameters:
+    ///   - lhs: The base `Value` to be raised to the power of the exponent.
+    ///   - rhs: The `Double` exponent.
+    ///
+    /// - Returns: A new `Value` representing the result of the exponential operation.
+    ///
+    /// - Note: The `operations` property of the resulting `Value` is set to "**" to indicate the operation performed.
+    ///
+    /// - Example:
+    ///   ```swift
+    ///   let baseValue = Value(2.0)
+    ///   let exponent = 3.0
+    ///   let result = baseValue ** exponent
+    ///   ```
+    ///   In this example, `result` will be a new `Value` representing 2.0 raised to the power of 3.0.
     static func ** (lhs: Value, rhs: Double) -> Value {
+        // Calculate the result of the exponential operation.
         let out = Value(pow(lhs.data, rhs), children: [lhs], operations: "**")
+        
+        // Define the backward closure for gradient calculation during backpropagation.
         out._backward = {
             lhs.grad += rhs * pow(lhs.data, rhs - 1) * out.grad
         }
+        
+        // Return the result of the exponential operation.
         return out
     }
+    
 }
 
-// Activation Functions
+/// Applies the hyperbolic tangent (tanh) activation function to a `Value` instance.
+///
+/// The tanh activation function maps input values to the range [-1, 1], providing non-linearity to neural networks.
+/// This method also computes the gradient of the tanh function during backpropagation.
+///
+/// - Returns: A new `Value` representing the result of applying the tanh activation function.
+///
+/// - Note: The `operations` property of the resulting `Value` is set to "tanh" to indicate the operation performed.
+///
+/// - Example:
+///   ```swift
+///   let inputValue = Value(0.5)
+///   let activatedValue = inputValue.tanh()
+///   ```
+///   In this example, `activatedValue` will be a new `Value` representing the tanh activation of the input value.
 extension Value {
-    /// Tanh activation function and its gradient function.
     func tanh() -> Value {
+        // Calculate the tanh activation function value.
         let val = exp(2.0 * self.data)
         let out = Value((val - 1) / (val + 1), children: [self], operations: "tanh")
+        
+        // Define the backward closure for gradient calculation during backpropagation.
         out._backward = {
             self.grad += (1 - pow(out.data, 2.0)) * out.grad
         }
+        
+        // Return the result of the tanh activation function.
         return out
     }
 }
 
+
 // Backward pass
+/// Performs a backward pass using topological sort to create a Directed Acyclic Graph (DAG).
+/// The backward pass is a crucial step in gradient-based optimization algorithms, where it calculates gradients
+/// with respect to the input variables by traversing the computation graph in reverse order.
+/// - Note: This method assumes that the `Value` instance represents a node in a computation graph.
+///
+/// - Complexity: O(V + E), where V is the number of vertices (nodes) and E is the number of edges in the graph.
+///
+/// - Parameters:
+///   - self: The `Value` instance representing the current node in the computation graph.
+///
+/// - Returns: None
+///
+/// - Important: The `grad` property of the input `Value` is set to 1.0 before the backward pass starts.
+///   The topological sort is used to ensure that the traversal is in the correct order to avoid cycles.
+///
+/// - SeeAlso: `_backward()`
 extension Value {
-    /// Topological sort is used to create a Directed Acyclic Graph (DAG) for backward pass.
     func backward() {
-            var sorted: [Value] = []
-            var visited: Set<Value> = []
-            
-            func buildTopologicalSort(_ vertex: Value) {
-                if !visited.contains(vertex) {
-                    visited.insert(vertex)
-                    for child in vertex.children {
-                        buildTopologicalSort(child)
-                    }
-                    sorted.append(vertex)
+        // A list to store the topologically sorted nodes during traversal.
+        var sorted: [Value] = []
+        
+        // A set to keep track of visited nodes to avoid redundant traversal.
+        var visited: Set<Value> = []
+        
+        // Helper function to recursively build the topological sort.
+        func buildTopologicalSort(_ vertex: Value) {
+            if !visited.contains(vertex) {
+                visited.insert(vertex)
+                // Recursively traverse the children of the current node.
+                for child in vertex.children {
+                    buildTopologicalSort(child)
                 }
-            }
-            
-            buildTopologicalSort(self)
-            
-            self.grad = 1.0
-            sorted.reverse()
-            for value in sorted {
-                value._backward()
+                // Add the current node to the sorted list after traversing its children.
+                sorted.append(vertex)
             }
         }
+        
+        // Start the topological sort from the current node.
+        buildTopologicalSort(self)
+        
+        // Set the gradient for the current node to 1.0, indicating the start of the backward pass.
+        self.grad = 1.0
+        
+        // Reverse the sorted list to perform the backward pass in the correct order.
+        sorted.reverse()
+        
+        // Perform the backward pass by calling the `_backward()` method on each node.
+        for value in sorted {
+            value._backward()
+        }
+    }
 }
+
 
 

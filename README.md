@@ -18,32 +18,10 @@ This module encompasses three key components:
 This module introduces the `Value` type, which serves as the backbone for representing scalar values in the DAG.
 
 ### Tensor.swift
-The `Tensor` class functions as a vector and can be used for various operations. Here's a brief overview:
+The `Tensor` class functions as a vector and can be used for various operations. It resembles very closely with PyTorch.tensor()
 
-```swift
-class Tensor {
-    
-    // Properties and Initializers
-    
-    // ... (Details as per Tensor.swift file)
-    
-    // View Function
-    func view(to shape: Int...) -> Bool {
-        // ... (Details as per Tensor.swift file)
-    }
-    
-    // Subscripts
-    
-    // ... (Details as per Tensor.swift file)
-    
-    // Backward Pass
-    func backward() {
-        // ... (Details as per Tensor.swift file)
-    }
-    
-    // ... (Other methods and functionalities as per Tensor.swift file)
-}
-```
+These three files will be updated to add more and more features from the PyTorch APIs. 
+
 
 ### Training a neural net:
 
