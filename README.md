@@ -43,6 +43,7 @@ class Tensor {
     
     // ... (Other methods and functionalities as per Tensor.swift file)
 }
+```
 
 ### Training a neural net:
 
