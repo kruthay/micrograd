@@ -10,6 +10,7 @@
 		873AD67E2B60B17B0097AE69 /* engine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 873AD67D2B60B17B0097AE69 /* engine.swift */; };
 		87FA29A32B60BFE300DA3F25 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87FA29A22B60BFE300DA3F25 /* main.swift */; };
 		87FA29A52B60C00800DA3F25 /* nn.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87FA29A42B60C00800DA3F25 /* nn.swift */; };
+		87FA29BE2B61D3DE00DA3F25 /* Tensor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87FA29BD2B61D3DE00DA3F25 /* Tensor.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -29,6 +30,7 @@
 		873AD67D2B60B17B0097AE69 /* engine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = engine.swift; sourceTree = "<group>"; };
 		87FA29A22B60BFE300DA3F25 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		87FA29A42B60C00800DA3F25 /* nn.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = nn.swift; sourceTree = "<group>"; };
+		87FA29BD2B61D3DE00DA3F25 /* Tensor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tensor.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -64,6 +66,7 @@
 				873AD67D2B60B17B0097AE69 /* engine.swift */,
 				87FA29A42B60C00800DA3F25 /* nn.swift */,
 				87FA29A22B60BFE300DA3F25 /* main.swift */,
+				87FA29BD2B61D3DE00DA3F25 /* Tensor.swift */,
 			);
 			path = micrograd;
 			sourceTree = "<group>";
@@ -133,6 +136,7 @@
 				87FA29A32B60BFE300DA3F25 /* main.swift in Sources */,
 				87FA29A52B60C00800DA3F25 /* nn.swift in Sources */,
 				873AD67E2B60B17B0097AE69 /* engine.swift in Sources */,
+				87FA29BE2B61D3DE00DA3F25 /* Tensor.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -6,6 +6,9 @@
 //
 
 import Foundation
+
+
+// Sample Example of MLP using Value
 var mlp = MLP(3, [4, 4, 1])
 
 var xs = [
@@ -33,3 +36,29 @@ for _ in 0...400 {
 print(loss.data)
 
 print(mlp.parameters.count)
+
+
+loss.backward()
+
+print(loss)
+
+// Sample Implementation using Tensor
+
+var x = Tensor([1,2,3])
+
+var y = Tensor([5,6,7])
+
+var z = Tensor([11,12,13])
+
+var i = x + y
+
+var j = i * z
+
+
+j.reduce(Value(0)) { $0 + $1 }.backward()
+
+
+
+print(x.grad)
+
+print(z.description)

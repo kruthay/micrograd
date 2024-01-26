@@ -7,20 +7,23 @@
 
 import Foundation
 
-
-class Neuron : CustomStringConvertible {
-    var w: [Value]
-    var b: Value
+/// Represents a single neuron in a neural network layer.
+class Neuron: CustomStringConvertible {
+    var w: [Value] // Weights
+    var b: Value    // Bias
     
+    /// Initializes a neuron with random weights and bias.
     init(_ nin: Int) {
         self.w = (0..<nin).map{ _ in Value(Double.random(in: -1...1)) }
         self.b = Value(Double.random(in: -1...1))
     }
     
+    /// Returns the parameters (weights and bias) of the neuron.
     var parameters: [Value] {
         return w + [b]
     }
     
+    /// A string representation of the neuron.
     var description: String {
         var description = "( "
         for n in 0..<w.count {
@@ -30,28 +33,32 @@ class Neuron : CustomStringConvertible {
         return description + " )"
     }
     
+    /// Computes the output of the neuron given an input array of Doubles.
     func callAsFunction(_ x: [Double]) -> Value {
-        var activation: Value = zip(w,x).map { $0 * $1 }.reduce(self.b, +)
+        var activation: Value = zip(w, x).map { $0 * $1 }.reduce(self.b, +)
         activation = activation.tanh()
         return activation
     }
     
+    /// Computes the output of the neuron given an input array of Values.
     func callAsFunction(_ x: [Value]) -> Value {
-        var activation: Value = zip(w,x).map { $0 * $1 }.reduce(self.b, +)
+        var activation: Value = zip(w, x).map { $0 * $1 }.reduce(self.b, +)
         activation = activation.tanh()
         return activation
     }
 }
 
-
-class Layer : CustomStringConvertible {
+/// Represents a layer in a neural network.
+class Layer: CustomStringConvertible {
     
     var neurons: [Neuron]
     
+    /// Returns the parameters (weights and biases) of all neurons in the layer.
     var parameters: [Value] {
         neurons.map { $0.parameters }.reduce([], +)
     }
     
+    /// A string representation of the layer.
     var description: String {
         var description = "\n"
         for neuron in neurons {
@@ -60,30 +67,33 @@ class Layer : CustomStringConvertible {
         return description
     }
     
-    
+    /// Initializes a layer with a specified number of input and output neurons.
     init(_ nin: Int, _ nout: Int) {
         self.neurons = (0..<nout).map{ _ in Neuron(nin) }
     }
     
+    /// Computes the output of the layer given an input array of Doubles.
     func callAsFunction(_ x: [Double]) -> [Value] {
         neurons.map { $0(x) }
     }
     
+    /// Computes the output of the layer given an input array of Values.
     func callAsFunction(_ x: [Value]) -> [Value] {
         neurons.map { $0(x) }
     }
-    
-    
 }
 
-class MLP : CustomStringConvertible {
+/// Represents a multi-layer perceptron (MLP) neural network.
+class MLP: CustomStringConvertible {
     
     var layers: [Layer]
     
+    /// Returns the parameters (weights and biases) of all layers in the MLP.
     var parameters: [Value] {
         return layers.map { $0.parameters }.reduce([], +)
     }
     
+    /// A string representation of the MLP.
     var description: String {
         var description = ""
         for layer in self.layers {
@@ -92,11 +102,13 @@ class MLP : CustomStringConvertible {
         return description
     }
     
-    init(_ nin: Int, _ nouts: [Int] ) {
+    /// Initializes an MLP with a specified number of input neurons and array of output neurons.
+    init(_ nin: Int, _ nouts: [Int]) {
         let totalnRequired = [nin] + nouts
         self.layers = (0..<nouts.count).map { Layer(totalnRequired[$0], totalnRequired[$0 + 1]) }
     }
     
+    /// Computes the output of the entire neural network given an input array of Doubles.
     func callAsFunction(_ x: [Double]) -> [Value] {
         var out = layers.first!(x)
         for layer in layers[1...] {
@@ -104,5 +116,4 @@ class MLP : CustomStringConvertible {
         }
         return out
     }
-    
 }
