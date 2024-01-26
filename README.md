@@ -1,21 +1,50 @@
-# Acknowledgments:
-micrograd is inspired from https://github.com/karpathy/micrograd 
+# Micrograd-Swift
 
-It's written in Swift. 
+## Acknowledgments
+This project draws inspiration from [karpathy/micrograd](https://github.com/karpathy/micrograd).
 
-# Description:
+## Overview
+Micrograd-Swift is a lightweight macOS command-line application that focuses on implementing backpropagation (reverse-mode autodiff) through a dynamically built Directed Acyclic Graph (DAG). The codebase consists of two primary modules, each succinctly written with around 100 lines for the DAG and 50 lines for a neural networks library, providing a PyTorch-like API. The DAG operates exclusively on scalar values, deconstructing each neuron into fundamental additions and multiplications. Despite its simplicity, the application is capable of constructing entire deep neural networks for binary classification, serving as a valuable educational resource.
 
+## Modules
 
-This is a command-line application to run on macOS. Implements backpropagation (reverse-mode autodiff) over a dynamically built DAG and a small neural networks library on top of it with a PyTorch-like API. Both are tiny, with about 100 and 50 lines of code respectively. The DAG only operates over scalar values, so e.g. we chop up each neuron into all of its individual tiny adds and multiplies. However, this is enough to build up entire deep neural nets doing binary classification, as main.swift shows. Potentially useful for educational purposes.
+### nn.swift
+This module encompasses three key components:
+- **Neuron**: Represents an individual neuron.
+- **Layer**: Defines a layer of neurons.
+- **MLP (Multi-Layer Perceptron)**: Represents a neural network with a PyTorch-like API.
 
+### engine.swift
+This module introduces the `Value` type, which serves as the backbone for representing scalar values in the DAG.
 
-nn.swift consists of 3 Modules. Neuron, Layer and MLP 
+### Tensor.swift
+The `Tensor` class functions as a vector and can be used for various operations. Here's a brief overview:
 
-engine.swift consists of a Value Type, which is a Scalar type.
+```swift
+class Tensor {
+    
+    // Properties and Initializers
+    
+    // ... (Details as per Tensor.swift file)
+    
+    // View Function
+    func view(to shape: Int...) -> Bool {
+        // ... (Details as per Tensor.swift file)
+    }
+    
+    // Subscripts
+    
+    // ... (Details as per Tensor.swift file)
+    
+    // Backward Pass
+    func backward() {
+        // ... (Details as per Tensor.swift file)
+    }
+    
+    // ... (Other methods and functionalities as per Tensor.swift file)
+}
 
-
-
-# Training a neural net:
+### Training a neural net:
 
 main.swift consists of a sample small neural network. 
 
