@@ -7,6 +7,9 @@
 
 import Foundation
 
+import Accelerate
+infix operator ^^ :  MultiplicationPrecedence
+
 /// Represents a multi-dimensional tensor.
 /// Represents a tensor with gradient values for each element.
 class Tensor {
@@ -25,7 +28,7 @@ class Tensor {
     let totalSize: Int
     
     /// Storage for the values of the tensor.
-    var storage: [Value]
+    private(set) var storage: [Value]
     
     /// Computes the linear index from the given multi-dimensional position.
     private lazy var linearIndex: ([Int]) -> Int = { [unowned self] position in
@@ -39,14 +42,14 @@ class Tensor {
     
     // MARK: - Initializers
     
-    /// Initializes a tensor with a specified initial value and dimensions.
+    /// Initializes a tensor with a specified initial value and shape.
     ///
     /// - Parameters:
     ///   - initialValue: The initial `Value` for all elements in the tensor.
-    ///   - dimensions: The dimensions of the tensor.
-    init(initialValue: Value, dimensions: Int...) {
-        self.shape = dimensions
-        self.totalSize = dimensions.reduce(1, *)
+    ///   - shape: The dimensions of the tensor.
+    init(initialValue: Value, shape: Int...) {
+        self.shape = shape
+        self.totalSize = shape.reduce(1, *)
         self.storage = Array(repeating: initialValue, count: totalSize)
     }
     
@@ -67,6 +70,12 @@ class Tensor {
         self.totalSize = 1
         self.storage = [scalarValue]
     }
+    
+    private init( data: [Value], shape: [Int]){
+        self.shape = shape
+        self.totalSize = shape.reduce(1, *)
+        self.storage = data
+    }
 }
 
 
@@ -78,6 +87,8 @@ extension Tensor {
     ///
     /// - Parameter shape: The new dimensions.
     /// - Returns: `true` if the reshaping is successful, otherwise `false`.
+    /// Result can be used if necessary
+    @discardableResult
     func view(to shape: Int...) -> Bool {
         let newTotalSize = shape.reduce(1, *)
         guard totalSize == newTotalSize else {
@@ -193,7 +204,7 @@ extension Tensor: CustomStringConvertible {
 
 extension Tensor {
     
-    // MARK: - Vector Operations
+    // MARK: - Basic Element Wise Operations
     
     /// Adds two tensors element-wise.
     ///
@@ -231,7 +242,30 @@ extension Tensor {
         return Tensor(resultValues)
     }
     
-    // MARK: - Additional Vector Operations
+    
+    /// Computes the sum of all values in the tensor and returns a new tensor with the result.
+       ///
+       /// - Returns: A new tensor with a single value representing the sum of all values in the original tensor.
+       func sum() -> Tensor {
+           // Extract the double values from the storage
+           let values = storage.map { $0.data }
+           
+           // Use reduce to calculate the sum
+           let sum = values.reduce(0.0, +)
+           
+           // Create a new tensor with the sum as the only value
+           let result = Tensor(data: [Value(sum)], shape: [1])
+           
+           return result
+       }
+    
+    
+    
+
+}
+
+extension Tensor {
+    // MARK: - Additional Neural Network Operations
     
     /// Performs the backward pass on the entire vector.
     ///
@@ -244,4 +278,57 @@ extension Tensor {
         
         self.storage.first!.backward()
     }
+}
+
+
+extension Tensor {
+    
+    func tanh() -> Tensor {
+        return Tensor(data: self.storage.map { $0.tanh() }, shape: self.shape)
+    }
+}
+
+
+extension Tensor {
+    /// Performs matrix multiplication of two tensors.
+    ///
+    /// - Parameters:
+    ///   - lhs: The left-hand side tensor.
+    ///   - rhs: The right-hand side tensor.
+    /// - Returns: A new tensor representing the result of matrix multiplication if dimensions are compatible; otherwise, returns nil.
+    static func ^^ (lhs: Tensor, rhs: Tensor) -> Tensor? {
+        // Extract dimensions of both matrices
+        let selfRows = lhs.shape[0]
+        let selfCols = lhs.shape[1]
+        let otherRows = rhs.shape[0]
+        let otherCols = rhs.shape[1]
+        
+        // Check if matrix dimensions are compatible for multiplication
+        guard selfCols == otherRows else {
+            print("Error: Incompatible matrix dimensions for multiplication")
+            return nil
+        }
+        
+        // Initialize result tensor with zeros
+        var resultData = Array(repeating: 0.0, count: selfRows * otherCols)
+        let result = Tensor(initialValue: Value(0.0), shape: selfRows, otherCols)
+        
+        // Extract double arrays for Accelerate multiplication
+        let selfData = lhs.storage.compactMap { $0.data }
+        let otherData = rhs.storage.compactMap { $0.data }
+        
+        // Perform matrix multiplication using Accelerate framework
+        vDSP_mmulD(selfData, 1,
+                   otherData, 1,
+                   &resultData, 1,
+                   vDSP_Length(selfRows),
+                   vDSP_Length(otherCols),
+                   vDSP_Length(selfCols))
+        
+        // Update result tensor with the new storage
+        result.storage = resultData.map { Value($0) }
+        
+        return result
+    }
+
 }

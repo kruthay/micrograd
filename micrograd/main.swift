@@ -33,32 +33,30 @@ for _ in 0...400 {
     lr = 0.1
     mlp.parameters.forEach { $0.data -= lr * $0.grad }
 }
-print(loss.data)
-
-print(mlp.parameters.count)
-
 
 loss.backward()
-
-print(loss)
 
 // Sample Implementation using Tensor
 
 var x = Tensor([1,2,3])
 
 var y = Tensor([5,6,7])
-
-var z = Tensor([11,12,13])
-
-var i = x + y
-
-var j = i * z
-
-
-j.reduce(Value(0)) { $0 + $1 }.backward()
+//x = Tensor([ 0.3583, -0.3830,  0.1439])
+//
+//y = Tensor([-0.3571, -1.1960,  0.3563])
 
 
 
-print(x.grad)
+x.view(to: 3,1)
+y.view(to: 1,3)
 
-print(z.description)
+if let m = x ^^ y {
+    var s = m.tanh()
+    var f = s.sum()
+    print(f)
+    f.backward()
+    print(s)
+}
+
+print(x, y)
+

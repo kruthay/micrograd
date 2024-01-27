@@ -60,7 +60,7 @@ extension Value: CustomStringConvertible {
     
     /// The custom string representation of the `Value` instance.
     var description: String {
-        return "\(label) d: \(String(format: "%.4f", data)), g: \(String(format: "%.4f", grad)) "
+        return "\(label) d: \(String(format: "%.8f", data)), g: \(String(format: "%.8f", grad)) "
     }
 }
 
@@ -183,13 +183,188 @@ extension Value: AdditiveArithmetic {
 }
 
 // Used to get protocol-based support for Numeric Variables and Error Values
-extension Value: Numeric {
+extension Value: FloatingPoint {
+    convenience init(sign: FloatingPointSign, exponent: Int, significand: Value) {
+        // Assuming data is of type Double
+        let value = Double(sign: sign, exponent: exponent, significand: significand.data)
+        self.init(value)
+    }
+        // Implement other required properties/methods of FloatingPoint
+        var exponentBitPattern: UInt { return data.exponentBitPattern }
+    var significandBitPattern: UInt { return UInt(data.significandBitPattern) }
+
+
+    var exponent: Int {
+        // Assuming data is of type Double
+        return Int(data.exponent)
+    }
+
+    func distance(to other: Value) -> Value {
+        // Assuming data is of type Double
+        let distanceValue = Value(data.distance(to: other.data))
+        return distanceValue
+    }
+
+    func advanced(by n: Value) -> Self {
+        // Assuming data is of type Double
+        Self(data.advanced(by: n.data))
+    }
+    
+    typealias Exponent = Int
+    
+    convenience init(signOf: Value, magnitudeOf: Value) {
+        // Assuming data is of type Double
+        let signedMagnitude = Foundation.copysign(magnitudeOf.data, signOf.data)
+        self.init(signedMagnitude)
+    }
+
+    
+    convenience init<Source>(_ value: Source) where Source: BinaryInteger {
+        // Assuming data is of type Double
+        self.init(Double(value))
+    }
+
+    
+    static var radix: Int {
+        2
+    }
+    
+    static var nan: Value {
+        Value(.nan)
+    }
+    
+    static var signalingNaN: Value {
+        Value(.signalingNaN)
+    }
+    
+    static var infinity: Value {
+        Value(.infinity)
+    }
+    
+    static var greatestFiniteMagnitude: Value {
+        Value(.greatestFiniteMagnitude)
+    }
+    
+    static var pi: Value {
+        Value(.pi)
+    }
+    
+    var ulp: Value {
+        Value(data.ulp)
+    }
+    
+    static var leastNormalMagnitude: Value {
+        Value(.leastNormalMagnitude)
+    }
+    
+    static var leastNonzeroMagnitude: Value {
+        Value(.leastNonzeroMagnitude)
+    }
+    
+    var sign: FloatingPointSign {
+        data.sign
+    }
+    
+    var significand: Value {
+        Value(data.significand)
+    }
+    
+    func formRemainder(dividingBy other: Value) {
+           self.remainder(dividingBy: other)
+        }
+
+        func formTruncatingRemainder(dividingBy other: Value) {
+            self.truncatingRemainder(dividingBy: other)
+        }
+    
+    func formSquareRoot() {
+        // Calculate the result of the square root operation.
+        let sqrtResult = Value(Foundation.sqrt(self.data), children: [self], operations: "sqrt")
+        
+        // Define the backward closure for gradient calculation during backpropagation.
+        sqrtResult._backward = {
+            self.grad += 0.5 / sqrtResult.data * sqrtResult.grad
+        }
+        
+        // Update the value with the result of the square root operation.
+        self.data = sqrtResult.data
+        
+    }
+    
+    func addProduct(_ lhs: Value, _ rhs: Value) {
+        var result = ( lhs * rhs)
+        result = self + result
+        
+        self.data = result.data
+        self._backward = result._backward
+        self.children = result.children
+    }
+    
+    var nextUp: Value {
+        Value(data.nextUp)
+    }
+    
+    func isEqual(to other: Value) -> Bool {
+        data.isEqual(to: other.data)
+    }
+    
+    func isLess(than other: Value) -> Bool {
+        data.isLess(than: other.data)
+    }
+    
+    func isLessThanOrEqualTo(_ other: Value) -> Bool {
+        data.isLessThanOrEqualTo(other.data)
+    }
+    
+    func isTotallyOrdered(belowOrEqualTo other: Value) -> Bool {
+        data.isTotallyOrdered(belowOrEqualTo: other.data)
+
+    }
+    
+    var isNormal: Bool {
+        data.isNormal
+    }
+    
+    var isFinite: Bool {
+        data.isFinite
+    }
+    
+    var isZero: Bool {
+        data.isZero
+    }
+    
+    var isSubnormal: Bool {
+        data.isSubnormal
+    }
+    
+    var isInfinite: Bool {
+        data.isInfinite
+    }
+    
+    var isNaN: Bool {
+        data.isNaN
+    }
+    
+    var isSignalingNaN: Bool {
+        data.isSignalingNaN
+    }
+    
+    var isCanonical: Bool {
+        data.isCanonical
+    }
+    
+    typealias Stride = Value
+    
+    convenience init(integerLiteral value: Int) {
+        self.init(Double(value))
+    }
+    
     var magnitude: Double {
         return Swift.abs(data)
     }
     
     /// Initializes a Value with an integer literal.
-    convenience init(integerLiteral value: Int) {
+    convenience init(_ value: Int) {
         self.init(Double(value))
     }
     
